@@ -308,3 +308,21 @@ resource "aws_config_config_rule" "root_no_access_keys" {
 
   depends_on = [aws_config_configuration_recorder_status.grc_recorder_status]
 }
+
+# Enable versioning on CloudTrail bucket
+resource "aws_s3_bucket_versioning" "cloudtrail_bucket_versioning" {
+  bucket = aws_s3_bucket.cloudtrail_bucket.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+# Enable versioning on Config bucket
+resource "aws_s3_bucket_versioning" "config_bucket_versioning" {
+  bucket = aws_s3_bucket.config_bucket.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
