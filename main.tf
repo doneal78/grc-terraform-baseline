@@ -62,3 +62,84 @@ resource "aws_s3_bucket_public_access_block" "grc_compliant_bucket_public_access
   block_public_policy     = true
   restrict_public_buckets = true
 }
+
+# CloudTrail - Audit logging for all API calls
+resource "aws_s3_bucket" "cloudtrail_bucket" {
+  bucket = "oraclerecon-cloudtrail-logs"
+
+  tags = {
+    Name        = "CloudTrail Logs"
+    Environment = "Lab"
+    Project     = "GRC Engineering Portfolio"
+    ManagedBy   = "Terraform"
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "cloudtrail_bucket_public_access" {
+  bucket = aws_s3_bucket.cloudtrail_bucket.id
+
+  block_public_acls       = true
+  ignore_public_acls      = true
+  block_public_policy     = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "cloudtrail_bucket_encryption" {
+  bucket = aws_s3_bucket.cloudtrail_bucket.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "cloudtrail_bucket_policy" {
+  bucket = aws_s3_bucket.cloudtrail_bucket.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AWSCloudTrailAclCheck"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudtrail.amazonaws.com"
+        }
+        Action   = "s3:GetBucketAcl"
+        Resource = "arn:aws:s3:::oraclerecon-cloudtrail-logs"
+      },
+      {
+        Sid    = "AWSCloudTrailWrite"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudtrail.amazonaws.com"
+        }
+        Action   = "s3:PutObject"
+        Resource = "arn:aws:s3:::oraclerecon-cloudtrail-logs/AWSLogs/868832438584/*"
+        Condition = {
+          StringEquals = {
+            "s3:x-amz-acl" = "bucket-owner-full-control"
+          }
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_cloudtrail" "grc_trail" {
+  name                          = "oraclerecon-grc-trail"
+  s3_bucket_name                = aws_s3_bucket.cloudtrail_bucket.id
+  include_global_service_events = true
+  is_multi_region_trail         = true
+  enable_log_file_validation    = true
+
+  tags = {
+    Name        = "GRC Audit Trail"
+    Environment = "Lab"
+    Project     = "GRC Engineering Portfolio"
+    ManagedBy   = "Terraform"
+  }
+
+  depends_on = [aws_s3_bucket_policy.cloudtrail_bucket_policy]
+}
