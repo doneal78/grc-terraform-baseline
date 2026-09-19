@@ -98,8 +98,8 @@ State management: terraform import used to bring existing resources under Terraf
 
 ## Related projects
 
-Project 2 Compliance Checker: https://gitlab.com/doneal78-group/grc-engineering-portfolio/grc-compliance-checker
+Project 2 Compliance Checker: https://github.com/doneal78/grc-compliance-checker
 
 Run the compliance checker before and after applying this baseline to see the score improvement in real numbers.
 
-Full portfolio: https://gitlab.com/doneal78-group/grc-engineering-portfolio
+Full portfolio: https://github.com/doneal78
